@@ -5,8 +5,7 @@ import lib.mod_config
 
 catemap = {
     'oi': 'http://hq.sinajs.cn?list=OI2105',
-    'p': 'http://hq.sinajs.cn?list=OI2105',
-    'rb': 'http://hq.sinajs.cn?list=RB2105',
+    'p': 'http://hq.sinajs.cn?list=P2105',
     'rb': 'http://hq.sinajs.cn?list=RB2105',
 }
 
@@ -62,6 +61,9 @@ class Qh:
         dataP = Run('p', tid)
 
         pc = float(dataOI['pc']) - float(dataP['pc'])
+        print(dataOI['pc'])
+        print(dataP['pc'])
+        print(pc)
         data = {
             'pc': pc,
             'tid': tid,
