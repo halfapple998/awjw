@@ -61,9 +61,8 @@ class Qh:
         dataP = Run('p', tid)
 
         pc = float(dataOI['pc']) - float(dataP['pc'])
-        print(dataOI['pc'])
-        print(dataP['pc'])
-        print(pc)
+        print(str(dataOI['pc']) + ' ' + str(dataP['pc']) + ' ' + str(pc))
+
         data = {
             'pc': pc,
             'tid': tid,
