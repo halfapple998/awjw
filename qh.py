@@ -7,6 +7,9 @@ catemap = {
     'oi': 'http://hq.sinajs.cn?list=OI2105',
     'p': 'http://hq.sinajs.cn?list=P2105',
     'rb': 'http://hq.sinajs.cn?list=RB2105',
+    'jd01': 'http://hq.sinajs.cn?list=JD2201',
+    'jd05': 'http://hq.sinajs.cn?list=JD2105',
+    'jd09': 'http://hq.sinajs.cn?list=JD2109',
 }
 
 
@@ -68,3 +71,33 @@ class Qh:
             'tid': tid,
         }
         return str(self.dbconn.insert(table='oip', data=data))
+
+    def RunJD01(self, tid):
+        data = Run('jd01', tid)
+        return str(self.dbconn.insert(table='jd01', data=data))
+
+    def RunJD05(self, tid):
+        data = Run('jd05', tid)
+        return str(self.dbconn.insert(table='jd05', data=data))
+
+    def RunJD09(self, tid):
+        data = Run('jd09', tid)
+        return str(self.dbconn.insert(table='jd09', data=data))
+
+    def RunJD(self, tid):
+        dataJD01 = Run('jd01', tid)
+        dataJD05 = Run('jd05', tid)
+        dataJD09 = Run('jd09', tid)
+
+        self.dbconn.insert(table='jd01', data=dataJD01)
+        self.dbconn.insert(table='jd05', data=dataJD05)
+        self.dbconn.insert(table='jd09', data=dataJD09)
+
+        pc = float(dataJD09['pc']) - float(dataJD05['pc'])
+        print(str(dataJD09['pc']) + ' ' + str(dataJD05['pc']) + ' ' + str(pc))
+
+        data = {
+            'pc': pc,
+            'tid': tid,
+        }
+        return str(self.dbconn.insert(table='jd59', data=data))
