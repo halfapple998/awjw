@@ -3,7 +3,6 @@ from __future__ import print_function, absolute_import
 from gm.api import *
 import talib
 
-
 '''
 本策略以SHFE.rb2101为交易标的，根据其一分钟(即60s频度）bar数据建立双均线模型，
 短周期为20，长周期为60，当短期均线由上向下穿越长期均线时做空，
@@ -15,18 +14,18 @@ import talib
 
 
 def init(context):
-    context.short = 20                                             # 短周期均线
-    context.long = 60                                              # 长周期均线
-    context.symbol = 'SHFE.rb2101'                                 # 订阅交易标的
-    context.period = context.long + 1                              # 订阅数据滑窗长度
-    context.open_long = False                                      # 开多单标记
-    context.open_short = False                                     # 开空单标记
-    subscribe(context.symbol, '60s', count=context.period)         # 订阅行情
+    context.short = 50  # 短周期均线
+    context.long = 210  # 长周期均线
+    context.symbol = 'SHFE.rb2101'  # 订阅交易标的
+    context.period = context.long + 1  # 订阅数据滑窗长度
+    context.open_long = False  # 开多单标记
+    context.open_short = False  # 开空单标记
+    subscribe(context.symbol, '300s', count=context.period)  # 订阅行情
 
 
 def on_bar(context, bars):
     # 获取通过subscribe订阅的数据
-    prices = context.data(context.symbol, '60s', context.period, fields='close')
+    prices = context.data(context.symbol, '300s', context.period, fields='close')
 
     # 利用talib库计算长短周期均线
     short_avg = talib.SMA(prices.values.reshape(context.period), context.short)
@@ -36,63 +35,62 @@ def on_bar(context, bars):
     position_long = context.account().position(symbol=context.symbol, side=1)
     position_short = context.account().position(symbol=context.symbol, side=2)
 
-    # 短均线下穿长均线，做空(即当前时间点短均线处于长均线下方，前一时间点短均线处于长均线上方)
-    if long_avg[-2] < short_avg[-2] and long_avg[-1] >= short_avg[-1]:
-        # 无多仓情况下，直接开空
+    if short_avg[-2] > short_avg[-1] and bars[0].close <= short_avg[-1]:
+
         if not position_long:
             order_volume(symbol=context.symbol, volume=1, side=OrderSide_Sell, position_effect=PositionEffect_Open,
                          order_type=OrderType_Market)
-            print(context.symbol, '以市价单调空仓到仓位')
+            print(context.symbol, 'kk')
 
-        # 有多仓情况下，先平多，再开空(开空命令放在on_order_status里面)
         else:
             context.open_short = True
-            # 以市价平多仓
+
             order_volume(symbol=context.symbol, volume=1, side=OrderSide_Sell, position_effect=PositionEffect_Close,
                          order_type=OrderType_Market)
-            print(context.symbol, '以市价单平多仓')
+            print(context.symbol, 'pd')
 
-    # 短均线上穿长均线，做多（即当前时间点短均线处于长均线上方，前一时间点短均线处于长均线下方）
-    if short_avg[-2] < long_avg[-2] and short_avg[-1] >= long_avg[-1]:
-        # 无空仓情况下，直接开多
-        if not position_short:
-            order_volume(symbol=context.symbol, volume=1, side=OrderSide_Buy, position_effect=PositionEffect_Open,
-                         order_type=OrderType_Market)
-            print(context.symbol, '以市价单调多仓到仓位')
+    if bars[0].close <= min(long_avg[-1], short_avg[-1]) and short_avg[-1] < short_avg[-2]:
 
-        # 有空仓的情况下，先平空，再开多(开多命令放在on_order_status里面)
-        else:
-            context.open_long = True
-            # 以市价平空仓
-            order_volume(symbol=context.symbol, volume=1, side=OrderSide_Buy,
-                         position_effect=PositionEffect_Close, order_type=OrderType_Market)
-            print(context.symbol, '以市价单平空仓')
-
-
-def on_order_status(context, order):
-    # 查看下单后的委托状态
-    status = order['status']
-    # 成交命令的方向
-    side = order['side']
-    # 交易类型
-    effect = order['position_effect']
-    # 当平仓委托全成后，再开仓
-    if status == 3:
-        # 以市价开空仓，需等到平仓成功无仓位后再开仓
-        # 如果无多仓且side=2（说明平多仓成功），开空仓
-        if effect == 2 and side == 2 and context.open_short:
-            context.open_short = False
+        if not position_short and not position_long:
             order_volume(symbol=context.symbol, volume=1, side=OrderSide_Sell, position_effect=PositionEffect_Open,
                          order_type=OrderType_Market)
-            print(context.symbol, '以市价单调空仓到仓位')
-        # 以市价开多仓,需等到平仓成功无仓位后再开仓
-        # 如果无空仓且side=1（说明平空仓成功），开多仓
-        if effect == 2 and side == 1 and context.open_long:
-            context.open_long = False
+            print(context.symbol, 'kk')
+
+        else:
+            if position_long:
+                order_volume(symbol=context.symbol, volume=1, side=OrderSide_Sell, position_effect=PositionEffect_Close,
+                             order_type=OrderType_Market)
+                print(context.symbol, 'pd')
+            if not position_short:
+                order_volume(symbol=context.symbol, volume=1, side=OrderSide_Sell, position_effect=PositionEffect_Open,
+                             order_type=OrderType_Market)
+                print(context.symbol, 'kk')
+
+    elif bars[0].close >= max(long_avg[-1], short_avg[-1]) and short_avg[-1] > short_avg[-2]:
+        if not position_short or not position_long:
             order_volume(symbol=context.symbol, volume=1, side=OrderSide_Buy, position_effect=PositionEffect_Open,
                          order_type=OrderType_Market)
-            print(context.symbol, '以市价单调多仓到仓位')
+            print(context.symbol, 'kd')
 
+        else:
+            if position_short:
+                order_volume(symbol=context.symbol, volume=1, side=OrderSide_Buy,
+                             position_effect=PositionEffect_Close, order_type=OrderType_Market)
+                print(context.symbol, 'pk')
+            if not position_long:
+                order_volume(symbol=context.symbol, volume=1, side=OrderSide_Buy, position_effect=PositionEffect_Open,
+                             order_type=OrderType_Market)
+                print(context.symbol, 'kd')
+    elif bars[0].close >= short_avg[-1]:
+        if position_short:
+            order_volume(symbol=context.symbol, volume=1, side=OrderSide_Buy,
+                         position_effect=PositionEffect_Close, order_type=OrderType_Market)
+            print(context.symbol, 'pk')
+    elif bars[0].close <= short_avg[-1]:
+        if position_short:
+            order_volume(symbol=context.symbol, volume=1, side=OrderSide_Sell, position_effect=PositionEffect_Close,
+                         order_type=OrderType_Market)
+            print(context.symbol, 'pd')
 
 
 if __name__ == '__main__':

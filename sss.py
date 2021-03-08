@@ -1,6 +1,3 @@
-import time
-import datetime
+from pip._internal.utils.compatibility_tags import get_supported
 
-from qh import Qh
-
-print(datetime.datetime.now()+datetime.timedelta(seconds=1))
+print(get_supported())
