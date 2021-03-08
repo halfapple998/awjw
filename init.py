@@ -13,5 +13,6 @@ while True:
         Qh().RunRB(t_id)
         Qh().RunOIP(t_id)
         Qh().RunJD(t_id)
+        Qh().RunFG(t_id)
 
     time.sleep(10)

@@ -10,6 +10,8 @@ catemap = {
     'jd01': 'http://hq.sinajs.cn?list=JD2201',
     'jd05': 'http://hq.sinajs.cn?list=JD2105',
     'jd09': 'http://hq.sinajs.cn?list=JD2109',
+    'fg05': 'http://hq.sinajs.cn?list=FG2105',
+    'fg09': 'http://hq.sinajs.cn?list=FG2109',
 }
 
 
@@ -101,3 +103,20 @@ class Qh:
             'tid': tid,
         }
         return str(self.dbconn.insert(table='jd59', data=data))
+
+    def RunFG(self, tid):
+        dataFG05 = Run('fg05', tid)
+        dataFG09 = Run('fg09', tid)
+
+
+        self.dbconn.insert(table='fg05', data=dataFG05)
+        self.dbconn.insert(table='fg09', data=dataFG09)
+
+        pc = float(dataFG09['pc']) - float(dataFG05['pc'])
+        print(str(dataFG09['pc']) + ' ' + str(dataFG05['pc']) + ' ' + str(pc))
+
+        data = {
+            'pc': pc,
+            'tid': tid,
+        }
+        return str(self.dbconn.insert(table='fg59', data=data))
